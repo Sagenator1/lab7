@@ -1,0 +1,128 @@
+---
+title: 'lab: multiple linear regression'
+author: "Sage Davis"
+date: "11/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(palmerpenguins)
+library(GGally)
+library(broom)
+library(kableExtra)
+library(modelsummary)
+library(stargazer)
+
+```
+
+explore penguins
+
+```{r}
+ggpairs(penguins)
+```
+
+
+Lets simplefy the variable that wee include:
+- species
+bill-LENGTH_mm,through body_mass_g
+
+```{r}
+penguins %>% 
+  select(species, bill_length_mm:body_mass_g) %>% 
+  ggpairs(aes(color = species))
+
+```
+
+we RE GOING TO PERFOR MULTIPLE LINEAR REGRESSION
+
+trying to understand   bit better  relationships between multiple predictor variables and an outcome which is penguin body mass
+
+- species
+- flipper length
+- sex
+- bill depth
+
+bad idea ( there are importabt vars missing)
+
+```{r}
+model_1 <- lm(body_mass_g ~ flipper_length_mm + bill_depth_mm, data = penguins)
+
+
+# Call model
+model_1
+
+# above does the same thing
+#summary(model_1)
+```
+
+If all other things are held contsant, for each 1 mm of flipper length there will be a 51.5g (use inline code) increase in body mass.
+
+Pr 9% > 5%, so retain the null hypothesis.
+
+R^2: 7596% of the variance in penguin body is explained by the model (or penguin bill and flipper length)
+
+Actually we think  this should contain sex as well.
+
+```{r}
+model_2 <- lm(body_mass_g ~ flipper_length_mm + species + sex, data = penguins)
+
+model_2
+```
+Lecture yesterday
+ reference is Adelle penguin
+ reference is sexfemale
+ 
+INtrepret:
+if all things remain constant, for every 1 mm fof flipper_length will increase body mass by 20.02
+
+if all thing remain constant, on average we expect the penguin is Gentoo (male) then the body mass will be 836g (530g) larger than an an Adelle (female)
+
+
+## visualize this model - on average male is 530g larger so is Adelle is 836g larger - does it look right
+
+```{r}
+ggplot(data = penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point(aes(color = species)) +
+  facet_wrap(~sex)
+
+```
+
+
+a aciuple ways to get an report are:
+
+broon::tidy() to get model coeff into in a tidy day a model
+
+```{r}
+penguin_model_coef <- tidy(model_2)
+
+penguin_model_coef
+```
+
+Gentu: `r penguin_model_coef$estimate[4]`
+
+Look at model diag
+
+use plot()
+
+```{r}
+plot(model_2)
+
+summary(model_2)
+```
+
+report moel in a table
+
+```{r}
+modelsummary(model_2)
+```
+use stargazer
+
+```{r, results = "asis"}
+
+stargazer(model_2, type = "html")
+
+stargazer(model_1, model_2, type = "html")
+```
+
